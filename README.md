@@ -99,14 +99,9 @@ npm install
 npm start
 ```
 
-🌟 Future Enhancements
-Tactical pattern recognition using computer vision
+---
 
-Personalized player development tracking
+## 🌟 Future Enhancements
 
-Integration with betting and fantasy platforms
-
-Expanded coverage to additional football leagues and historical seasons
-
-📄 License
-This project is licensed under the MIT License - see the LICENSE file for details.
+- Tactical pattern recognition using computer vision
+- Personalized player development tracking
