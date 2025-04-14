@@ -1,4 +1,4 @@
-package com.example.pl_connect.player;
+package com.pl.premier_zone.player;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
