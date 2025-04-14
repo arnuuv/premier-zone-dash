@@ -2,8 +2,6 @@
 
 **A sophisticated football analytics platform that transforms raw player data into actionable insights through advanced statistical modeling, interactive visualizations, and predictive analytics.**
 
-![Football Analytics Dashboard](#)
-
 ## 🧾 Overview
 
 **FootballMetrica** delivers comprehensive Premier League performance metrics through an elegant, data-driven platform. By combining cutting-edge data processing with intuitive visualization tools, it empowers fantasy managers, sports analysts, and football enthusiasts to discover patterns and make informed decisions.
