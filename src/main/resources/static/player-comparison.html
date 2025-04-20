@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Player Comparison - Premier Zone</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        .comparison-container {
+            margin-top: 30px;
+        }
+        .player-card {
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 20px;
+        }
+        .metric-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+        }
+        .metric-name {
+            font-weight: bold;
+        }
+        .chart-container {
+            height: 300px;
+            margin-bottom: 30px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1 class="mt-4 mb-4">Player Comparison</h1>
+        
+        <div class="row">
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header">Compare Players</div>
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <label for="playerSearch" class="form-label">Search Players</label>
+                            <input type="text" class="form-control" id="playerSearch" placeholder="Enter player name">
+                            <div id="playerSuggestions" class="mt-2"></div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label">Selected Players</label>
+                            <div id="selectedPlayers" class="list-group"></div>
+                        </div>
+                        
+                        <button id="compareBtn" class="btn btn-primary" disabled>Compare Players</button>
+                    </div>
+                </div>
+                
+                <div class="card mt-3">
+                    <div class="card-header">Quick Comparisons</div>
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <label for="positionSelect" class="form-label">Compare by Position</label>
+                            <select class="form-select" id="positionSelect">
+                                <option value="">Select Position</option>
+                                <option value="FW">Forward</option>
+                                <option value="MF">Midfielder</option>
+                                <option value="DF">Defender</option>
+                                <option value="GK">Goalkeeper</option>
+                            </select>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="teamSelect" class="form-label">Compare by Team</label>
+                            <select class="form-select" id="teamSelect">
+                                <option value="">Select Team</option>
+                                <!-- Teams will be populated dynamically -->
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header">Comparison Results</div>
+                    <div class="card-body">
+                        <div id="comparisonResults">
+                            <p class="text-center text-muted">Select players to compare</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="row mt-4">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header">Performance Charts</div>
+                    <div class="card-body">
+                        <div class="chart-container">
+                            <canvas id="performanceChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // JavaScript code for player comparison functionality
+        document.addEventListener('DOMContentLoaded', function() {
+            const playerSearch = document.getElementById('playerSearch');
+            const playerSuggestions = document.getElementById('playerSuggestions');
+            const selectedPlayers = document.getElementById('selectedPlayers');
+            const compareBtn = document.getElementById('compareBtn');
+            const positionSelect = document.getElementById('positionSelect');
+            const teamSelect = document.getElementById('teamSelect');
+            const comparisonResults = document.getElementById('comparisonResults');
+            
+            let selectedPlayersList = [];
+            let performanceChart = null;
+            
+            // Load teams for dropdown
+            fetch('/api/teams')
+                .then(response => response.json())
+                .then(teams => {
+                    teams.forEach(team => {
+                        const option = document.createElement('option');
+                        option.value = team;
+                        option.textContent = team;
+                        teamSelect.appendChild(option);
+                    });
+                })
+                .catch(error => console.error('Error loading teams:', error));
+            
+            // Player search functionality
+            playerSearch.addEventListener('input', function() {
+                const searchTerm = this.value.trim();
+                if (searchTerm.length < 3) {
+                    playerSuggestions.innerHTML = '';
+                    return;
+                }
+                
+                fetch(`/api/players/search?name=${searchTerm}`)
+                    .then(response => response.json())
+                    .then(players => {
+                        playerSuggestions.innerHTML = '';
+                        players.forEach(player => {
+                            const playerItem = document.createElement('div');
+                            playerItem.className = 'p-2 border-bottom';
+                            playerItem.textContent = `${player.name} (${player.team})`;
+                            playerItem.style.cursor = 'pointer';
+                            
+                            playerItem.addEventListener('click', function() {
+                                if (selectedPlayersList.length < 5 && !selectedPlayersList.includes(player.name)) {
+                                    selectedPlayersList.push(player.name);
+                                    updateSelectedPlayersList();
+                                    playerSearch.value = '';
+                                    playerSuggestions.innerHTML = '';
+                                }
+                            });
+                            
+                            playerSuggestions.appendChild(playerItem);
+                        });
+                    })
+                    .catch(error => console.error('Error searching players:', error));
+            });
+            
+            // Update selected players list
+            function updateSelectedPlayersList() {
+                selectedPlayers.innerHTML = '';
+                selectedPlayersList.forEach(playerName => {
+                    const playerItem = document.createElement('div');
+                    playerItem.className = 'list-group-item d-flex justify-content-between align-items-center';
+                    playerItem.textContent = playerName;
+                    
+                    const removeBtn = document.createElement('button');
+                    removeBtn.className = 'btn btn-sm btn-danger';
+                    removeBtn.textContent = 'Remove';
+                    removeBtn.addEventListener('click', function() {
+                        selectedPlayersList = selectedPlayersList.filter(name => name !== playerName);
+                        updateSelectedPlayersList();
+                    });
+                    
+                    playerItem.appendChild(removeBtn);
+                    selectedPlayers.appendChild(playerItem);
+                });
+                
+                compareBtn.disabled = selectedPlayersList.length < 2;
+            }
+            
+            // Compare button click handler
+            compareBtn.addEventListener('click', function() {
+                if (selectedPlayersList.length < 2) return;
+                
+                fetch('/api/player-comparison/by-names', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(selectedPlayersList)
+                })
+                .then(response => response.json())
+                .then(data => {
+                    displayComparisonResults(data);
+                    createPerformanceChart(data);
+                })
+                .catch(error => console.error('Error comparing players:', error));
+            });
+            
+            // Position select change handler
+            positionSelect.addEventListener('change', function() {
+                const position = this.value;
+                if (!position) return;
+                
+                fetch(`/api/player-comparison/by-position/${position}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        displayComparisonResults(data);
+                        createPerformanceChart(data);
+                    })
+                    .catch(error => console.error('Error comparing players by position:', error));
+            });
+            
+            // Team select change handler
+            teamSelect.addEventListener('change', function() {
+                const team = this.value;
+                if (!team) return;
+                
+                fetch(`/api/player-comparison/by-team/${team}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        displayComparisonResults(data);
+                        createPerformanceChart(data);
+                    })
+                    .catch(error => console.error('Error comparing players by team:', error));
+            });
+            
+            // Display comparison results
+            function displayComparisonResults(data) {
+                comparisonResults.innerHTML = '';
+                
+                const basicInfo = data.basicInfo;
+                const metrics = data.performanceMetrics;
+                
+                // Create player cards
+                basicInfo.forEach((player, index) => {
+                    const playerCard = document.createElement('div');
+                    playerCard.className = 'player-card';
+                    
+                    const playerHeader = document.createElement('h4');
+                    playerHeader.textContent = player.name;
+                    playerCard.appendChild(playerHeader);
+                    
+                    const playerTeam = document.createElement('p');
+                    playerTeam.textContent = `${player.team} | ${player.position} | Age: ${player.age}`;
+                    playerCard.appendChild(playerTeam);
+                    
+                    const metricsList = document.createElement('div');
+                    metricsList.className = 'metrics-list';
+                    
+                    // Add key metrics
+                    addMetric(metricsList, 'Matches', metrics.matchesPlayed[index]);
+                    addMetric(metricsList, 'Goals', metrics.goals[index]);
+                    addMetric(metricsList, 'Assists', metrics.assists[index]);
+                    addMetric(metricsList, 'Goals/90', metrics.goalsPerNinety[index].toFixed(2));
+                    addMetric(metricsList, 'Assists/90', metrics.assistsPerNinety[index].toFixed(2));
+                    addMetric(metricsList, 'xG', metrics.expectedGoals[index].toFixed(2));
+                    addMetric(metricsList, 'xAG', metrics.expectedAssists[index].toFixed(2));
+                    
+                    playerCard.appendChild(metricsList);
+                    comparisonResults.appendChild(playerCard);
+                });
+            }
+            
+            // Helper function to add a metric row
+            function addMetric(container, name, value) {
+                const metricRow = document.createElement('div');
+                metricRow.className = 'metric-row';
+                
+                const metricName = document.createElement('span');
+                metricName.className = 'metric-name';
+                metricName.textContent = name;
+                
+                const metricValue = document.createElement('span');
+                metricValue.className = 'metric-value';
+                metricValue.textContent = value;
+                
+                metricRow.appendChild(metricName);
+                metricRow.appendChild(metricValue);
+                container.appendChild(metricRow);
+            }
+            
+            // Create performance chart
+            function createPerformanceChart(data) {
+                const ctx = document.getElementById('performanceChart').getContext('2d');
+                
+                // Destroy existing chart if it exists
+                if (performanceChart) {
+                    performanceChart.destroy();
+                }
+                
+                const playerNames = data.basicInfo.map(player => player.name);
+                const metrics = [
+                    { key: 'goals', label: 'Goals' },
+                    { key: 'assists', label: 'Assists' },
+                    { key: 'expectedGoals', label: 'xG' },
+                    { key: 'expectedAssists', label: 'xAG' },
+                    { key: 'goalsPerNinety', label: 'Goals/90' },
+                    { key: 'assistsPerNinety', label: 'Assists/90' }
+                ];
+                
+                const datasets = metrics.map((metric, index) => {
+                    return {
+                        label: metric.label,
+                        data: data.performanceMetrics[metric.key],
+                        backgroundColor: getChartColor(index, 0.7),
+                        borderColor: getChartColor(index, 1),
+                        borderWidth: 1
+                    };
+                });
+                
+                performanceChart = new Chart(ctx, {
+                    type: 'radar',
+                    data: {
+                        labels: playerNames,
+                        datasets: datasets
+                    },
+                    options: {
+                        scales: {
+                            r: {
+                                beginAtZero: true
+                            }
+                        }
+                    }
+                });
+            }
+            
+            // Helper function to get chart colors
+            function getChartColor(index, alpha) {
+                const colors = [
+                    `rgba(255, 99, 132, ${alpha})`,
+                    `rgba(54, 162, 235, ${alpha})`,
+                    `rgba(255, 206, 86, ${alpha})`,
+                    `rgba(75, 192, 192, ${alpha})`,
+                    `rgba(153, 102, 255, ${alpha})`,
+                    `rgba(255, 159, 64, ${alpha})`
+                ];
+                return colors[index % colors.length];
+            }
+        });
+    </script>
+</body>
+</html> 
