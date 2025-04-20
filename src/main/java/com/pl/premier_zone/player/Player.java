@@ -1,12 +1,21 @@
 package com.pl.premier_zone.player;
 
+import com.pl.premier_zone.player.statistics.PlayerStatistics;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
+import jakarta.persistence.OneToOne;
+import jakarta.persistence.CascadeType;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
 @Entity
 @Table(name = "player_stats")
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
 public class Player {
     @Id
     @Column(name = "name", unique = true)
@@ -26,6 +35,8 @@ public class Player {
     private Double xag;
     private String team;
 
+    @OneToOne(mappedBy = "player", cascade = CascadeType.ALL, orphanRemoval = true)
+    private PlayerStatistics statistics;
 
     public Player(String name) {
         this.name = name;
