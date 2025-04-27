@@ -1,67 +1,144 @@
-# FootballMetrics
+# Premier Zone - Football Analytics Platform
 
-**A sophisticated football analytics platform that transforms raw player data into actionable insights through advanced statistical modeling, interactive visualizations, and predictive analytics.**
+Premier Zone is a comprehensive football analytics platform focused on Premier League statistics, player comparisons, and fantasy football team building.
 
----
+## Features
 
-## 🧰 Technical Stack
+### Player Statistics
 
-- **Languages:** Java, Python, SQL
-- **Frameworks:** Spring Boot,
-- **Database:** PostgreSQL
-- **Tools:** Maven, npm, Jupyter Notebooks
-- **Deployment:** Docker, AWS/GCP _(planned)_
+- Detailed statistics for all Premier League players
+- Performance metrics including goals, assists, expected goals (xG), and more
+- Advanced filtering and sorting options
 
----
+### Player Comparison
 
-## 🚀 Getting Started
+- Compare multiple players side by side
+- Visual representation of statistical differences
+- Compare by position, team, or individual selection
+- Radar charts for easy performance visualization
 
-### ✅ Prerequisites
+### Fantasy Team Builder
 
-- Java 21
-- Node.js 18+
-- PostgreSQL 15
-- Python 3.9+
+- Create your dream team with a £100M budget
+- Choose from various formations (4-4-2, 4-3-3, etc.)
+- Select players based on real-world statistics
+- Calculate fantasy points based on player performances
+- Team constraints (max 3 players from same team)
+- Captain selection for bonus points
 
-### 🛠️ Installation
+## Technology Stack
 
-#### 1. Clone the repository
+- **Backend**: Spring Boot, Java 17
+- **Database**: H2 Database (development), PostgreSQL (production)
+- **Frontend**: HTML, CSS, JavaScript, Bootstrap 5
+- **API**: RESTful API architecture
 
-```bash
-git clone https://github.com/yourusername/football-metrica.git
-cd football-metrica
+## Getting Started
+
+### Prerequisites
+
+- Java 17 or higher
+- Maven 3.6 or higher
+
+### Installation
+
+1. Clone the repository
+
+```
+git clone https://github.com/yourusername/premier-zone.git
+cd premier-zone
 ```
 
-#### 2. Setup the Database
+2. Build the application
 
-```bash
-psql -U postgres -c "CREATE DATABASE player_statistic"
+```
+./mvnw clean package
 ```
 
-####3. Configure application properties
+3. Run the application
 
-```bash
-Edit src/main/resources/application.properties with your database credentials.
+```
+./mvnw spring-boot:run
 ```
 
-#### 4. Run the application
+4. Access the application
 
-```bash
-cd spring-boot-backend-project
-mvn spring-boot:run
-```
+- Open your browser and navigate to `http://localhost:8080`
 
-#### 5. Run the frontend
+### API Endpoints
 
-```bash
-cd frontend
-npm install
-npm start
-```
+#### Players
 
----
+- `GET /api/players` - Get all players
+- `GET /api/players/{id}` - Get player by ID
+- `GET /api/players/team/{team}` - Get players by team
 
-## 🌟 Future Enhancements
+#### Player Comparison
 
-- Tactical pattern recognition using computer vision
-- Personalized player development tracking
+- `POST /api/player-comparison/by-names` - Compare players by names
+- `GET /api/player-comparison/by-position/{position}` - Compare players by position
+- `GET /api/player-comparison/by-team/{team}` - Compare players by team
+
+#### Fantasy Teams
+
+- `GET /api/fantasy/teams` - Get all fantasy teams
+- `GET /api/fantasy/teams/{id}` - Get fantasy team by ID
+- `POST /api/fantasy/teams` - Create a new fantasy team
+- `POST /api/fantasy/teams/{teamId}/players/{playerId}` - Add player to team
+- `DELETE /api/fantasy/teams/{teamId}/players/{playerId}` - Remove player from team
+- `POST /api/fantasy/teams/{teamId}/captain/{playerId}` - Set team captain
+- `GET /api/fantasy/teams/{teamId}/points` - Calculate team points
+
+## Database Schema
+
+### Player
+
+- id (String): Unique identifier
+- name (String): Player name
+- team (String): Current team
+- pos (String): Position (GK, DF, MF, FW)
+- age (Integer): Player age
+- nation (String): Nationality
+- mp (Integer): Matches played
+- starts (Integer): Matches started
+- min (Integer): Minutes played
+- gls (Integer): Goals scored
+- ast (Integer): Assists
+- pk (Integer): Penalties taken
+- crdy (Integer): Yellow cards
+- crdr (Integer): Red cards
+- xg (Double): Expected goals
+- xag (Double): Expected assists
+- marketValue (Double): Market value in millions
+- cleanSheets (Integer): Clean sheets (GK/DF)
+- penaltySaves (Integer): Penalties saved (GK)
+- penaltyMisses (Integer): Penalties missed
+
+### FantasyTeam
+
+- id (Long): Unique identifier
+- name (String): Team name
+- ownerUsername (String): Team owner
+- formation (String): Team formation
+- budget (Double): Total budget
+- spentBudget (Double): Amount spent
+- totalPoints (Integer): Total fantasy points
+- players (List<Player>): Team players
+- captainIds (List<String>): Team captains
+
+## Contributing
+
+1. Fork the repository
+2. Create your feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add some amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
+
+## License
+
+This project is licensed under the MIT License - see the LICENSE file for details.
+
+## Acknowledgments
+
+- Data sourced from public Premier League statistics
+- Inspired by Fantasy Premier League and other football analytics platforms
