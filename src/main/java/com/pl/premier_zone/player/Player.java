@@ -25,15 +25,19 @@ public class Player {
     private Integer age;
     private Integer mp;
     private Integer starts;
-    private Double min;
-    private Double gls;
-    private Double ast;
-    private Double pk;
-    private Double crdy;
-    private Double crdr;
+    private Integer min;
+    private Integer gls;
+    private Integer ast;
+    private Integer pk;
+    private Integer crdy;
+    private Integer crdr;
     private Double xg;
     private Double xag;
     private String team;
+    private Double marketValue;
+    private Integer cleanSheets;
+    private Integer penaltySaves;
+    private Integer penaltyMisses;
 
     @OneToOne(mappedBy = "player", cascade = CascadeType.ALL, orphanRemoval = true)
     private PlayerStatistics statistics;
