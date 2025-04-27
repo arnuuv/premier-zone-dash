@@ -1,0 +1,764 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fantasy Team Builder - Premier Zone</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        .pitch {
+            background-color: #4CAF50;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+            position: relative;
+            height: 600px;
+        }
+        .player-position {
+            position: absolute;
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            background-color: white;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        .player-position:hover {
+            transform: scale(1.1);
+        }
+        .player-position.filled {
+            background-color: #2196F3;
+            color: white;
+        }
+        .player-position.captain {
+            background-color: #FFC107;
+            color: black;
+        }
+        .player-name {
+            font-size: 12px;
+            font-weight: bold;
+            text-align: center;
+        }
+        .player-value {
+            font-size: 10px;
+        }
+        .player-list {
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        .budget-bar {
+            height: 20px;
+            border-radius: 10px;
+            background-color: #e9ecef;
+            margin-bottom: 10px;
+        }
+        .budget-progress {
+            height: 100%;
+            border-radius: 10px;
+            background-color: #28a745;
+            transition: width 0.3s;
+        }
+    </style>
+</head>
+<body>
+    <div class="container mt-4">
+        <h1 class="mb-4">Fantasy Team Builder</h1>
+        
+        <div class="row">
+            <div class="col-md-8">
+                <div class="card mb-4">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <span>Your Team: <span id="teamName">My Fantasy Team</span></span>
+                        <div>
+                            <button id="saveTeamBtn" class="btn btn-primary btn-sm">Save Team</button>
+                            <button id="calculatePointsBtn" class="btn btn-success btn-sm ms-2">Calculate Points</button>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label for="formationSelect" class="form-label">Formation</label>
+                                <select id="formationSelect" class="form-select">
+                                    <option value="4-4-2">4-4-2</option>
+                                    <option value="4-3-3">4-3-3</option>
+                                    <option value="3-5-2">3-5-2</option>
+                                    <option value="5-3-2">5-3-2</option>
+                                    <option value="3-4-3">3-4-3</option>
+                                    <option value="4-5-1">4-5-1</option>
+                                    <option value="5-4-1">5-4-1</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Budget</label>
+                                <div class="budget-bar">
+                                    <div id="budgetProgress" class="budget-progress" style="width: 0%;"></div>
+                                </div>
+                                <div class="d-flex justify-content-between">
+                                    <span id="spentBudget">£0.0m</span>
+                                    <span id="remainingBudget">£100.0m</span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="pitch" id="pitchContainer">
+                            <!-- Player positions will be generated dynamically based on formation -->
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <p><strong>Players:</strong> <span id="playerCount">0</span>/11</p>
+                            </div>
+                            <div class="col-md-6 text-end">
+                                <p><strong>Total Points:</strong> <span id="totalPoints">0</span></p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="card">
+                    <div class="card-header">Team Rules</div>
+                    <div class="card-body">
+                        <ul>
+                            <li>Select exactly 11 players: 1 goalkeeper, defenders, midfielders, and forwards according to your formation</li>
+                            <li>Maximum budget of £100 million</li>
+                            <li>Maximum 3 players from the same team</li>
+                            <li>Select 1 captain (double points)</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-4">
+                <div class="card">
+                    <div class="card-header">
+                        <ul class="nav nav-tabs card-header-tabs" id="playerTabs">
+                            <li class="nav-item">
+                                <a class="nav-link active" data-position="all" href="#">All</a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" data-position="GK" href="#">GK</a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" data-position="DF" href="#">DEF</a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" data-position="MF" href="#">MID</a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" data-position="FW" href="#">FWD</a>
+                            </li>
+                        </ul>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <input type="text" class="form-control" id="playerSearch" placeholder="Search players...">
+                        </div>
+                        
+                        <div class="player-list" id="playerList">
+                            <!-- Players will be loaded here -->
+                            <div class="text-center">
+                                <div class="spinner-border text-primary" role="status">
+                                    <span class="visually-hidden">Loading...</span>
+                                </div>
+                                <p>Loading players...</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Player Selection Modal -->
+    <div class="modal fade" id="playerSelectionModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Select Player for <span id="positionLabel"></span></h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="list-group" id="modalPlayerList">
+                        <!-- Available players for the position will be loaded here -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Bootstrap and other scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // DOM elements
+            const pitchContainer = document.getElementById('pitchContainer');
+            const formationSelect = document.getElementById('formationSelect');
+            const playerList = document.getElementById('playerList');
+            const playerSearch = document.getElementById('playerSearch');
+            const playerTabs = document.getElementById('playerTabs');
+            const playerCount = document.getElementById('playerCount');
+            const budgetProgress = document.getElementById('budgetProgress');
+            const spentBudget = document.getElementById('spentBudget');
+            const remainingBudget = document.getElementById('remainingBudget');
+            const totalPoints = document.getElementById('totalPoints');
+            const saveTeamBtn = document.getElementById('saveTeamBtn');
+            const calculatePointsBtn = document.getElementById('calculatePointsBtn');
+            
+            // Team data
+            let teamData = {
+                name: 'My Fantasy Team',
+                formation: '4-4-2',
+                players: [],
+                captain: null,
+                budget: 100.0,
+                spentBudget: 0.0,
+                teamId: null
+            };
+            
+            // All players data
+            let allPlayers = [];
+            
+            // Initialize the app
+            init();
+            
+            function init() {
+                // Load all players
+                loadPlayers();
+                
+                // Set up formation change handler
+                formationSelect.addEventListener('change', function() {
+                    teamData.formation = this.value;
+                    renderPitch();
+                });
+                
+                // Set up player search handler
+                playerSearch.addEventListener('input', function() {
+                    filterPlayers(this.value);
+                });
+                
+                // Set up player tabs handler
+                playerTabs.addEventListener('click', function(e) {
+                    if (e.target.tagName === 'A') {
+                        e.preventDefault();
+                        
+                        // Update active tab
+                        document.querySelectorAll('#playerTabs .nav-link').forEach(tab => {
+                            tab.classList.remove('active');
+                        });
+                        e.target.classList.add('active');
+                        
+                        // Filter players by position
+                        const position = e.target.getAttribute('data-position');
+                        filterPlayersByPosition(position);
+                    }
+                });
+                
+                // Set up save team button handler
+                saveTeamBtn.addEventListener('click', saveTeam);
+                
+                // Set up calculate points button handler
+                calculatePointsBtn.addEventListener('click', calculatePoints);
+                
+                // Initial pitch render
+                renderPitch();
+            }
+            
+            function loadPlayers() {
+                fetch('/api/players')
+                    .then(response => response.json())
+                    .then(data => {
+                        allPlayers = data;
+                        renderPlayerList(allPlayers);
+                    })
+                    .catch(error => {
+                        console.error('Error loading players:', error);
+                        playerList.innerHTML = '<div class="alert alert-danger">Error loading players. Please try again.</div>';
+                    });
+            }
+            
+            function renderPitch() {
+                // Clear pitch
+                pitchContainer.innerHTML = '';
+                
+                // Parse formation
+                const [defenders, midfielders, forwards] = teamData.formation.split('-').map(Number);
+                
+                // Add goalkeeper position
+                addPlayerPosition('GK', 1, 50, 90);
+                
+                // Add defender positions
+                const defenderSpacing = 100 / (defenders + 1);
+                for (let i = 1; i <= defenders; i++) {
+                    addPlayerPosition('DF', i, defenderSpacing * i, 70);
+                }
+                
+                // Add midfielder positions
+                const midfielderSpacing = 100 / (midfielders + 1);
+                for (let i = 1; i <= midfielders; i++) {
+                    addPlayerPosition('MF', i, midfielderSpacing * i, 50);
+                }
+                
+                // Add forward positions
+                const forwardSpacing = 100 / (forwards + 1);
+                for (let i = 1; i <= forwards; i++) {
+                    addPlayerPosition('FW', i, forwardSpacing * i, 30);
+                }
+                
+                // Update player count
+                updatePlayerCount();
+            }
+            
+            function addPlayerPosition(position, index, x, y) {
+                const positionElement = document.createElement('div');
+                positionElement.className = 'player-position';
+                positionElement.setAttribute('data-position', position);
+                positionElement.setAttribute('data-index', index);
+                positionElement.style.left = `${x}%`;
+                positionElement.style.top = `${y}%`;
+                positionElement.style.transform = 'translate(-50%, -50%)';
+                
+                // Find player in this position
+                const player = teamData.players.find(p => p.position === position && p.index === index);
+                
+                if (player) {
+                    positionElement.classList.add('filled');
+                    if (teamData.captain === player.id) {
+                        positionElement.classList.add('captain');
+                    }
+                    
+                    positionElement.innerHTML = `
+                        <div class="player-name">${player.name}</div>
+                        <div class="player-value">£${player.value}m</div>
+                    `;
+                    
+                    // Add click handler for filled positions
+                    positionElement.addEventListener('click', function() {
+                        showPlayerOptions(player, position, index);
+                    });
+                } else {
+                    positionElement.innerHTML = `
+                        <div class="player-name">${getPositionName(position)}</div>
+                        <div class="player-value">Click to add</div>
+                    `;
+                    
+                    // Add click handler for empty positions
+                    positionElement.addEventListener('click', function() {
+                        showPlayerSelectionModal(position, index);
+                    });
+                }
+                
+                pitchContainer.appendChild(positionElement);
+            }
+            
+            function getPositionName(position) {
+                switch (position) {
+                    case 'GK': return 'Goalkeeper';
+                    case 'DF': return 'Defender';
+                    case 'MF': return 'Midfielder';
+                    case 'FW': return 'Forward';
+                    default: return position;
+                }
+            }
+            
+            function renderPlayerList(players) {
+                playerList.innerHTML = '';
+                
+                if (players.length === 0) {
+                    playerList.innerHTML = '<div class="alert alert-info">No players found.</div>';
+                    return;
+                }
+                
+                const listGroup = document.createElement('div');
+                listGroup.className = 'list-group';
+                
+                players.forEach(player => {
+                    const playerItem = document.createElement('a');
+                    playerItem.className = 'list-group-item list-group-item-action';
+                    playerItem.href = '#';
+                    
+                    // Check if player is already in team
+                    const isInTeam = teamData.players.some(p => p.id === player.id);
+                    if (isInTeam) {
+                        playerItem.classList.add('disabled');
+                    }
+                    
+                    playerItem.innerHTML = `
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <strong>${player.name}</strong> (${player.team})
+                                <div class="small">${getPositionName(player.pos)}</div>
+                            </div>
+                            <div>
+                                <span class="badge bg-primary">£${player.marketValue || '5.0'}m</span>
+                            </div>
+                        </div>
+                    `;
+                    
+                    playerItem.addEventListener('click', function(e) {
+                        e.preventDefault();
+                        if (!isInTeam) {
+                            addPlayerToNextAvailablePosition(player);
+                        }
+                    });
+                    
+                    listGroup.appendChild(playerItem);
+                });
+                
+                playerList.appendChild(listGroup);
+            }
+            
+            function filterPlayers(searchTerm) {
+                searchTerm = searchTerm.toLowerCase();
+                
+                const filteredPlayers = allPlayers.filter(player => {
+                    return player.name.toLowerCase().includes(searchTerm) || 
+                           player.team.toLowerCase().includes(searchTerm);
+                });
+                
+                renderPlayerList(filteredPlayers);
+            }
+            
+            function filterPlayersByPosition(position) {
+                if (position === 'all') {
+                    renderPlayerList(allPlayers);
+                } else {
+                    const filteredPlayers = allPlayers.filter(player => player.pos === position);
+                    renderPlayerList(filteredPlayers);
+                }
+            }
+            
+            function showPlayerSelectionModal(position, index) {
+                const modal = new bootstrap.Modal(document.getElementById('playerSelectionModal'));
+                const modalPlayerList = document.getElementById('modalPlayerList');
+                const positionLabel = document.getElementById('positionLabel');
+                
+                positionLabel.textContent = getPositionName(position);
+                modalPlayerList.innerHTML = '';
+                
+                // Filter available players for this position
+                const availablePlayers = allPlayers.filter(player => {
+                    return player.pos === position && !teamData.players.some(p => p.id === player.id);
+                });
+                
+                if (availablePlayers.length === 0) {
+                    modalPlayerList.innerHTML = '<div class="alert alert-info">No available players for this position.</div>';
+                } else {
+                    availablePlayers.forEach(player => {
+                        const playerItem = document.createElement('a');
+                        playerItem.className = 'list-group-item list-group-item-action';
+                        playerItem.href = '#';
+                        
+                        playerItem.innerHTML = `
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <strong>${player.name}</strong> (${player.team})
+                                </div>
+                                <div>
+                                    <span class="badge bg-primary">£${player.marketValue || '5.0'}m</span>
+                                </div>
+                            </div>
+                        `;
+                        
+                        playerItem.addEventListener('click', function(e) {
+                            e.preventDefault();
+                            addPlayerToTeam(player, position, index);
+                            modal.hide();
+                        });
+                        
+                        modalPlayerList.appendChild(playerItem);
+                    });
+                }
+                
+                modal.show();
+            }
+            
+            function addPlayerToTeam(player, position, index) {
+                // Check budget
+                const playerValue = player.marketValue || 5.0;
+                if (teamData.spentBudget + playerValue > teamData.budget) {
+                    alert('Not enough budget to add this player!');
+                    return;
+                }
+                
+                // Check team constraints (max 3 players from same team)
+                const teamCounts = {};
+                teamData.players.forEach(p => {
+                    const playerObj = allPlayers.find(ap => ap.id === p.id);
+                    if (playerObj) {
+                        teamCounts[playerObj.team] = (teamCounts[playerObj.team] || 0) + 1;
+                    }
+                });
+                
+                if (teamCounts[player.team] >= 3) {
+                    alert('Maximum 3 players from the same team allowed!');
+                    return;
+                }
+                
+                // Add player to team
+                teamData.players.push({
+                    id: player.id,
+                    name: player.name,
+                    position: position,
+                    index: index,
+                    value: playerValue
+                });
+                
+                // Update budget
+                teamData.spentBudget += playerValue;
+                updateBudget();
+                
+                // Re-render pitch
+                renderPitch();
+                
+                // Update player list to disable selected player
+                renderPlayerList(allPlayers);
+            }
+            
+            function addPlayerToNextAvailablePosition(player) {
+                // Find next available position based on player's position
+                const position = player.pos;
+                
+                // Parse formation
+                const [defenders, midfielders, forwards] = teamData.formation.split('-').map(Number);
+                
+                // Check available positions
+                let availableIndex = -1;
+                
+                switch (position) {
+                    case 'GK':
+                        // Check if goalkeeper position is available
+                        if (!teamData.players.some(p => p.position === 'GK')) {
+                            availableIndex = 1;
+                        }
+                        break;
+                    case 'DF':
+                        // Check available defender positions
+                        for (let i = 1; i <= defenders; i++) {
+                            if (!teamData.players.some(p => p.position === 'DF' && p.index === i)) {
+                                availableIndex = i;
+                                break;
+                            }
+                        }
+                        break;
+                    case 'MF':
+                        // Check available midfielder positions
+                        for (let i = 1; i <= midfielders; i++) {
+                            if (!teamData.players.some(p => p.position === 'MF' && p.index === i)) {
+                                availableIndex = i;
+                                break;
+                            }
+                        }
+                        break;
+                    case 'FW':
+                        // Check available forward positions
+                        for (let i = 1; i <= forwards; i++) {
+                            if (!teamData.players.some(p => p.position === 'FW' && p.index === i)) {
+                                availableIndex = i;
+                                break;
+                            }
+                        }
+                        break;
+                }
+                
+                if (availableIndex !== -1) {
+                    addPlayerToTeam(player, position, availableIndex);
+                } else {
+                    alert(`No available ${getPositionName(position)} positions in your formation!`);
+                }
+            }
+            
+            function showPlayerOptions(player, position, index) {
+                const options = [
+                    { label: 'Remove Player', action: () => removePlayerFromTeam(player.id) },
+                    { label: player.id === teamData.captain ? 'Remove Captain' : 'Make Captain', action: () => toggleCaptain(player.id) }
+                ];
+                
+                const optionsHtml = options.map(option => 
+                    `<button class="btn btn-outline-primary w-100 mb-2">${option.label}</button>`
+                ).join('');
+                
+                // Create a simple modal for options
+                const modal = document.createElement('div');
+                modal.className = 'modal fade';
+                modal.innerHTML = `
+                    <div class="modal-dialog">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title">${player.name}</h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                            </div>
+                            <div class="modal-body">
+                                ${optionsHtml}
+                            </div>
+                        </div>
+                    </div>
+                `;
+                
+                document.body.appendChild(modal);
+                
+                // Add event listeners to buttons
+                const buttons = modal.querySelectorAll('.btn-outline-primary');
+                buttons.forEach((button, index) => {
+                    button.addEventListener('click', () => {
+                        options[index].action();
+                        bootstrap.Modal.getInstance(modal).hide();
+                    });
+                });
+                
+                // Show modal
+                const modalInstance = new bootstrap.Modal(modal);
+                modalInstance.show();
+                
+                // Clean up when modal is hidden
+                modal.addEventListener('hidden.bs.modal', () => {
+                    document.body.removeChild(modal);
+                });
+            }
+            
+            function removePlayerFromTeam(playerId) {
+                // Find player in team
+                const playerIndex = teamData.players.findIndex(p => p.id === playerId);
+                
+                if (playerIndex !== -1) {
+                    // Update budget
+                    teamData.spentBudget -= teamData.players[playerIndex].value;
+                    
+                    // Remove player
+                    teamData.players.splice(playerIndex, 1);
+                    
+                    // Remove captain if needed
+                    if (teamData.captain === playerId) {
+                        teamData.captain = null;
+                    }
+                    
+                    // Update UI
+                    updateBudget();
+                    renderPitch();
+                    renderPlayerList(allPlayers);
+                }
+            }
+            
+            function toggleCaptain(playerId) {
+                if (teamData.captain === playerId) {
+                    // Remove captain
+                    teamData.captain = null;
+                } else {
+                    // Set as captain
+                    teamData.captain = playerId;
+                }
+                
+                // Re-render pitch
+                renderPitch();
+            }
+            
+            function updatePlayerCount() {
+                playerCount.textContent = teamData.players.length;
+            }
+            
+            function updateBudget() {
+                const spentPercentage = (teamData.spentBudget / teamData.budget) * 100;
+                budgetProgress.style.width = `${spentPercentage}%`;
+                
+                // Change color based on percentage
+                if (spentPercentage > 90) {
+                    budgetProgress.style.backgroundColor = '#dc3545'; // Red
+                } else if (spentPercentage > 75) {
+                    budgetProgress.style.backgroundColor = '#ffc107'; // Yellow
+                } else {
+                    budgetProgress.style.backgroundColor = '#28a745'; // Green
+                }
+                
+                spentBudget.textContent = `£${teamData.spentBudget.toFixed(1)}m`;
+                remainingBudget.textContent = `£${(teamData.budget - teamData.spentBudget).toFixed(1)}m`;
+            }
+            
+            function saveTeam() {
+                // Check if team has 11 players
+                if (teamData.players.length !== 11) {
+                    alert('Your team must have exactly 11 players!');
+                    return;
+                }
+                
+                // Check if team has a goalkeeper
+                if (!teamData.players.some(p => p.position === 'GK')) {
+                    alert('Your team must have a goalkeeper!');
+                    return;
+                }
+                
+                // Prepare data for API
+                const apiData = {
+                    name: teamData.name,
+                    ownerUsername: 'currentUser', // This would come from authentication
+                    formation: teamData.formation
+                };
+                
+                // If team already exists, update it, otherwise create new
+                const apiUrl = teamData.teamId ? 
+                    `/api/fantasy/teams/${teamData.teamId}` : 
+                    '/api/fantasy/teams';
+                
+                const method = teamData.teamId ? 'PUT' : 'POST';
+                
+                fetch(apiUrl, {
+                    method: method,
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(apiData)
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.id) {
+                        teamData.teamId = data.id;
+                        
+                        // Now add players to team
+                        const playerPromises = teamData.players.map(player => {
+                            return fetch(`/api/fantasy/teams/${data.id}/players/${player.id}`, {
+                                method: 'POST'
+                            });
+                        });
+                        
+                        return Promise.all(playerPromises).then(() => {
+                            // Set captain if exists
+                            if (teamData.captain) {
+                                return fetch(`/api/fantasy/teams/${data.id}/captain/${teamData.captain}`, {
+                                    method: 'POST'
+                                });
+                            }
+                        });
+                    }
+                })
+                .then(() => {
+                    alert('Team saved successfully!');
+                })
+                .catch(error => {
+                    console.error('Error saving team:', error);
+                    alert('Error saving team. Please try again.');
+                });
+            }
+            
+            function calculatePoints() {
+                if (!teamData.teamId) {
+                    alert('Please save your team first!');
+                    return;
+                }
+                
+                fetch(`/api/fantasy/teams/${teamData.teamId}/points`)
+                    .then(response => response.json())
+                    .then(data => {
+                        totalPoints.textContent = data.points;
+                        alert(`Your team has scored ${data.points} points!`);
+                    })
+                    .catch(error => {
+                        console.error('Error calculating points:', error);
+                        alert('Error calculating points. Please try again.');
+                    });
+            }
+        });
+    </script>
+</body>
+</html> 
