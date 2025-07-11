@@ -2,6 +2,8 @@
 
 Premier Zone is a comprehensive football analytics platform focused on Premier League statistics, player comparisons, and fantasy football team building.
 
+Project here - https://premierzone.vercel.app/
+
 ## Features
 
 ### Player Statistics
@@ -142,3 +144,7 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 
 - Data sourced from public Premier League statistics
 - Inspired by Fantasy Premier League and other football analytics platforms
+- This project was inspired by SWErikCodes and his YouTube tutorial: Ultimate Java Backend Project: Spring Boot Tutorial.
+
+
+
